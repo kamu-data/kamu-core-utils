@@ -8,6 +8,9 @@
 
 package dev.kamu.core.utils.test
 
+import java.sql.Timestamp
+import java.time.{LocalDate, LocalTime, ZoneOffset, ZonedDateTime}
+
 import com.holdenkarau.spark.testing.DatasetSuiteBase
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.KryoSerializer
@@ -18,6 +21,24 @@ import org.datasyslab.geosparksql.utils.GeoSparkSQLRegistrator
 import org.scalatest.Suite
 
 trait KamuDataFrameSuite extends DatasetSuiteBase { self: Suite =>
+
+  def ts(milis: Long) = new Timestamp(milis)
+
+  def ts(
+    year: Int,
+    month: Int,
+    day: Int,
+    hour: Int = 0,
+    minute: Int = 0
+  ): Timestamp = {
+    val dt = ZonedDateTime.of(
+      LocalDate.of(year, month, day),
+      LocalTime.of(hour, minute),
+      ZoneOffset.UTC
+    )
+
+    Timestamp.valueOf(dt.toLocalDateTime)
+  }
 
   override def conf: SparkConf = {
     super.conf
