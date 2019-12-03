@@ -8,7 +8,7 @@
 
 package dev.kamu.core.utils.test
 
-import com.holdenkarau.spark.testing.DataFrameSuiteBase
+import com.holdenkarau.spark.testing.DatasetSuiteBase
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.DataFrame
@@ -17,7 +17,7 @@ import org.datasyslab.geospark.serde.GeoSparkKryoRegistrator
 import org.datasyslab.geosparksql.utils.GeoSparkSQLRegistrator
 import org.scalatest.Suite
 
-trait KamuDataFrameSuite extends DataFrameSuiteBase { self: Suite =>
+trait KamuDataFrameSuite extends DatasetSuiteBase { self: Suite =>
 
   override def conf: SparkConf = {
     super.conf
