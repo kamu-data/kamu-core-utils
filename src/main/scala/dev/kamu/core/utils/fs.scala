@@ -13,12 +13,18 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 package object fs {
 
   implicit class PathExt(val p: Path) {
-    def resolve(child: String): Path = {
-      new Path(p, child)
+    def resolve(children: String*): Path = {
+      if (children.isEmpty)
+        p
+      else
+        new Path(p, children.head).resolve(children.tail: _*)
     }
 
-    def resolve(child: Path): Path = {
-      new Path(p, child)
+    def resolve(children: Path*): Path = {
+      if (children.isEmpty)
+        p
+      else
+        new Path(p, children.head).resolve(children.tail: _*)
     }
   }
 
