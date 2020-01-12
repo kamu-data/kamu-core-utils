@@ -8,23 +8,34 @@
 
 package dev.kamu.core.utils
 
+import java.util.UUID
+
 import org.apache.hadoop.fs.{FileSystem, Path}
 
 package object fs {
 
   implicit class PathExt(val p: Path) {
-    def resolve(children: String*): Path = {
-      if (children.isEmpty)
-        p
+    def resolve(child: String, more: String*): Path = {
+      val pp = ensureHasPath()
+      if (more.isEmpty)
+        new Path(pp, child)
       else
-        new Path(p, children.head).resolve(children.tail: _*)
+        new Path(pp, child).resolve(more.head, more.tail: _*)
     }
 
-    def resolve(children: Path*): Path = {
-      if (children.isEmpty)
-        p
+    def resolve(child: Path, more: Path*): Path = {
+      val pp = ensureHasPath()
+      if (more.isEmpty)
+        new Path(pp, child)
       else
-        new Path(p, children.head).resolve(children.tail: _*)
+        new Path(pp, child).resolve(more.head, more.tail: _*)
+    }
+
+    private def ensureHasPath(): Path = {
+      if (p.toUri.isAbsolute && p.toUri.getPath.isEmpty)
+        new Path(p, "/")
+      else
+        p
     }
   }
 
@@ -34,6 +45,30 @@ package object fs {
         p
       else
         fs.getWorkingDirectory.resolve(p)
+    }
+  }
+
+  object Temp {
+    def systemTempDir: Path =
+      new Path(System.getProperty("java.io.tmpdir"))
+
+    def getRandomTempDir(prefix: String): Path =
+      systemTempDir.resolve(prefix + UUID.randomUUID.toString)
+
+    def withRandomTempDir[T](
+      fileSystem: FileSystem,
+      prefix: String
+    )(
+      func: Path => T
+    ): T = {
+      val tempDir = getRandomTempDir(prefix)
+      fileSystem.mkdirs(tempDir)
+
+      try {
+        func(tempDir)
+      } finally {
+        fileSystem.delete(tempDir, true)
+      }
     }
   }
 
