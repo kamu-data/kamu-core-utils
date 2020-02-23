@@ -42,6 +42,7 @@ trait KamuDataFrameSuite extends DatasetSuiteBase { self: Suite =>
 
   override def conf: SparkConf = {
     super.conf
+      .set("spark.sql.session.timeZone", "UTC")
       .set("spark.serializer", classOf[KryoSerializer].getName)
       .set("spark.kryo.registrator", classOf[GeoSparkKryoRegistrator].getName)
   }
