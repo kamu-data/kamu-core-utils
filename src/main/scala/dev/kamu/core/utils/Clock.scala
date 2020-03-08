@@ -16,6 +16,19 @@ trait Clock {
   def timestamp(): Timestamp
 }
 
+class AutoClock(clock: Option[java.time.Clock] = None) extends Clock {
+  protected val _clock: java.time.Clock =
+    clock.getOrElse(java.time.Clock.systemUTC())
+
+  def instant(): Instant = {
+    _clock.instant()
+  }
+
+  def timestamp(): Timestamp = {
+    Timestamp.from(instant())
+  }
+}
+
 class ManualClock(clock: Option[java.time.Clock] = None) extends Clock {
   protected val _clock: java.time.Clock =
     clock.getOrElse(java.time.Clock.systemUTC())
