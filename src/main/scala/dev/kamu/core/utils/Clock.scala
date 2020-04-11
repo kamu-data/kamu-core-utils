@@ -29,17 +29,27 @@ class AutoClock(clock: Option[java.time.Clock] = None) extends Clock {
   }
 }
 
-class ManualClock(clock: Option[java.time.Clock] = None) extends Clock {
+class ManualClock(
+  now: Option[Instant] = None,
+  clock: Option[java.time.Clock] = None
+) extends Clock {
   protected val _clock: java.time.Clock =
     clock.getOrElse(java.time.Clock.systemUTC())
 
   protected var _current: Instant = Instant.MIN
 
-  def advance(): Unit = {
-    val next = _clock.instant()
+  def set(next: Instant): Unit = {
     if (next.compareTo(_current) <= 0)
       throw new RuntimeException("Non-monotonic clock behavior detected")
     _current = next
+  }
+
+  def set(next: Timestamp): Unit = {
+    set(next.toInstant)
+  }
+
+  def advance(): Unit = {
+    set(_clock.instant())
   }
 
   def instant(): Instant = {
