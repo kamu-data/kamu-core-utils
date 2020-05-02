@@ -18,7 +18,6 @@ import org.apache.spark.sql.functions.{col, date_format, expr}
 import org.apache.spark.sql.types.{
   ArrayType,
   DataType,
-  IntegerType,
   NumericType,
   StringType,
   StructType,
@@ -31,7 +30,7 @@ trait DataFrameDigest {
   def digest(df: DataFrame): String
 }
 
-class DataFrameDigestSHA1 extends DataFrameDigest {
+class DataFrameDigestSHA256 extends DataFrameDigest {
   override def digest(df: DataFrame): String = {
     ensureTimezone(df.sparkSession)
 
@@ -46,7 +45,7 @@ class DataFrameDigestSHA1 extends DataFrameDigest {
       .csv(tmpDir.toString)
 
     val output = try {
-      Process(Seq("/bin/sh", "-c", s"sort ${tmpDir}/part-*.csv | sha1sum")).!!
+      Process(Seq("/bin/sh", "-c", s"sort ${tmpDir}/part-*.csv | sha256sum")).!!
     } finally {
       fs.delete(tmpDir, true)
     }

@@ -8,7 +8,7 @@
 
 package dev.kamu.core.utils.test
 
-import dev.kamu.core.utils.DataFrameDigestSHA1
+import dev.kamu.core.utils.DataFrameDigestSHA256
 import org.scalatest.FunSuite
 
 class DataFrameDigestTest extends FunSuite with KamuDataFrameSuite {
@@ -37,9 +37,11 @@ class DataFrameDigestTest extends FunSuite with KamuDataFrameSuite {
       )
       .toDF("system_time", "id", "name")
 
-    val actual = new DataFrameDigestSHA1().digest(df)
+    val actual = new DataFrameDigestSHA256().digest(df)
 
-    assert(actual == "f5bb5b05ee0b172c784ec4ac71c4559744a1cd3b")
+    assert(
+      actual == "8c9cff3819cca6c379a0ef03fa786e8b313cbd2047d85950640a321ae58844dc"
+    )
   }
 
   test("Computes stable digest - geometry") {
@@ -70,9 +72,11 @@ class DataFrameDigestTest extends FunSuite with KamuDataFrameSuite {
         "ST_GeomFromWKT(geom) as geom"
       )
 
-    val actual = new DataFrameDigestSHA1().digest(df)
+    val actual = new DataFrameDigestSHA256().digest(df)
 
-    assert(actual == "fe40ea58c253619c54efbc66a62a6d1d594953e4")
+    assert(
+      actual == "8c2110d2bd86a4a1960f9560b63baeacbcabb02748d1df672a7ae8289ebed72c"
+    )
   }
 
   test("Computes stable digest - array of simple types") {
@@ -95,9 +99,11 @@ class DataFrameDigestTest extends FunSuite with KamuDataFrameSuite {
       )
       .toDF("system_time", "id", "tags", "nums")
 
-    val actual = new DataFrameDigestSHA1().digest(df)
+    val actual = new DataFrameDigestSHA256().digest(df)
 
-    assert(actual == "8a892bad282f3a61bfd608e07e4da37e70f03104")
+    assert(
+      actual == "5d09c502c461b53bcd0f1dd5003ea36c801cab311dce8760c70ac5d8a233b4fc"
+    )
   }
 
   test("Computes stable digest - array of timestamps") {
@@ -119,7 +125,7 @@ class DataFrameDigestTest extends FunSuite with KamuDataFrameSuite {
       .toDF("system_time", "id", "times")
 
     assertThrows[NotImplementedError] {
-      new DataFrameDigestSHA1().digest(df)
+      new DataFrameDigestSHA256().digest(df)
     }
   }
 
@@ -152,9 +158,11 @@ class DataFrameDigestTest extends FunSuite with KamuDataFrameSuite {
         "struct(num, share, tags) as info"
       )
 
-    val actual = new DataFrameDigestSHA1().digest(df)
+    val actual = new DataFrameDigestSHA256().digest(df)
 
-    assert(actual == "ce29a331f66914495de4b2f34a54f696191c8578")
+    assert(
+      actual == "43938e5e35a4de93d9b2d79eb6871e9fd335a6995118ebb4e0751a7f19a27731"
+    )
   }
 
 }
