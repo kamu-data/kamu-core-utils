@@ -8,11 +8,11 @@
 
 package dev.kamu.core.utils
 
+import dev.kamu.core.utils.fs._
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
 
-import scala.sys.process.{Process, ProcessBuilder}
-import fs._
+import scala.sys.process.{Process, ProcessBuilder, ProcessLogger}
 
 case class DockerRunArgs(
   image: String,
@@ -146,6 +146,20 @@ class DockerClient(fileSystem: FileSystem) {
       )
     } catch {
       case _: RuntimeException => None
+    }
+  }
+
+  def withNetwork[T](network: String, logger: Option[ProcessLogger] = None)(
+    body: => T
+  ): T = {
+    val processLogger = logger.getOrElse(IOHandlerPresets.blackHoledLogger())
+
+    prepare(Seq("docker", "network", "create", network)).!(processLogger)
+
+    try {
+      body
+    } finally {
+      prepare(Seq("docker", "network", "rm", network)).!(processLogger)
     }
   }
 }

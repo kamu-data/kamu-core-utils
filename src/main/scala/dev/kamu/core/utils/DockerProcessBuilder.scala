@@ -179,6 +179,10 @@ object IOHandlerPresets {
     )
   }
 
+  def blackHoledLogger(): ProcessLogger = {
+    ProcessLogger(_ => (), _ => ())
+  }
+
   def logged(
     logger: Logger,
     outLevel: Priority = Level.DEBUG,
