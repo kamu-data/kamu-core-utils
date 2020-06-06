@@ -33,6 +33,11 @@ case class DockerRunArgs(
   detached: Boolean = false
 )
 
+case class ExecArgs(
+  tty: Boolean = false,
+  interactive: Boolean = false
+)
+
 class DockerClient(fileSystem: FileSystem) {
   protected val logger = LogManager.getLogger(getClass.getName)
 
@@ -57,6 +62,23 @@ class DockerClient(fileSystem: FileSystem) {
         entryPoint = Some("bash"),
         args = List("-c", shellCommand.mkString(" "))
       )
+    )
+  }
+
+  def exec(
+    execArgs: ExecArgs,
+    container: String,
+    command: Seq[String]
+  ): ProcessBuilder = {
+    prepare(
+      List(
+        "docker",
+        "exec"
+      ) ++ (
+        if (execArgs.interactive) List("-i") else List.empty
+      ) ++ (
+        if (execArgs.tty) List("-t") else List.empty,
+      ) ++ List(container) ++ command
     )
   }
 

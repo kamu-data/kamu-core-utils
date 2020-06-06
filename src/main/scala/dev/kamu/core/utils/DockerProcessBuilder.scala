@@ -49,9 +49,9 @@ class DockerProcessBuilder(
 }
 
 class DockerProcess(
-  id: String,
+  val id: String,
   dockerClient: DockerClient,
-  containerName: String,
+  val containerName: String,
   processBuilder: ProcessBuilder,
   runArgs: DockerRunArgs,
   ioHandler: Option[ProcessIO] = None
@@ -71,8 +71,8 @@ class DockerProcess(
     process.exitValue()
   }
 
-  def kill(): Unit = {
-    dockerClient.kill(containerName)
+  def kill(signal: String = "TERM"): Unit = {
+    dockerClient.kill(containerName, signal)
   }
 
   def getHostPort(containerPort: Int): Option[Int] = {

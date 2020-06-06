@@ -8,6 +8,7 @@
 
 package dev.kamu.core.utils
 
+import java.io.OutputStream
 import java.util.UUID
 
 import org.apache.hadoop.fs.{FileSystem, Path}
@@ -68,6 +69,25 @@ package object fs {
         func(tempDir)
       } finally {
         fileSystem.delete(tempDir, true)
+      }
+    }
+
+    def withTempFile[T](
+      fileSystem: FileSystem,
+      prefix: String,
+      writeFun: OutputStream => Unit
+    )(
+      body: Path => T
+    ): T = {
+      val path = systemTempDir.resolve(prefix + UUID.randomUUID().toString)
+      val outputStream = fileSystem.create(path, false)
+      try {
+        writeFun(outputStream)
+        outputStream.close()
+        body(path)
+      } finally {
+        outputStream.close()
+        fileSystem.delete(path, false)
       }
     }
   }
