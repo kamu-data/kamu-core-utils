@@ -77,7 +77,7 @@ class DockerClient(fileSystem: FileSystem) {
       ) ++ (
         if (execArgs.interactive) List("-i") else List.empty
       ) ++ (
-        if (execArgs.tty) List("-t") else List.empty,
+        if (execArgs.tty) List("-t") else List.empty
       ) ++ List(container) ++ command
     )
   }
