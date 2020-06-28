@@ -8,21 +8,10 @@
 
 package dev.kamu.core.utils
 
-import java.util.UUID
-
-import fs._
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import better.files.File
 import org.apache.spark.sql.functions.{col, date_format, expr}
-import org.apache.spark.sql.types.{
-  ArrayType,
-  DataType,
-  NumericType,
-  StringType,
-  StructType,
-  TimestampType
-}
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import scala.sys.process.Process
 
@@ -34,23 +23,20 @@ class DataFrameDigestSHA256 extends DataFrameDigest {
   override def digest(df: DataFrame): String = {
     ensureTimezone(df.sparkSession)
 
-    val tmpDir = new Path(sys.props("java.io.tmpdir"))
-      .resolve("kamu-data-" + UUID.randomUUID.toString)
+    val tempDir = File(Temp.getRandomTempName("kamu-data-"))
 
-    val fs = tmpDir.getFileSystem(new Configuration())
+    try {
+      normalizeData(df)
+        .repartition(1)
+        .write
+        .csv(tempDir.toString)
 
-    normalizeData(df)
-      .repartition(1)
-      .write
-      .csv(tmpDir.toString)
-
-    val output = try {
-      Process(Seq("/bin/sh", "-c", s"sort ${tmpDir}/part-*.csv | sha256sum")).!!
+      Process(
+        Seq("/bin/sh", "-c", s"sort ${tempDir}/part-*.csv | sha256sum")
+      ).!!.split(' ').head
     } finally {
-      fs.delete(tmpDir, true)
+      tempDir.delete(true)
     }
-
-    output.split(' ').head
   }
 
   protected def normalizeData(df: DataFrame): DataFrame = {

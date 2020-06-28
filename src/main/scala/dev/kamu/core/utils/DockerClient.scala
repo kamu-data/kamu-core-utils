@@ -8,9 +8,9 @@
 
 package dev.kamu.core.utils
 
-import dev.kamu.core.utils.fs._
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.log4j.LogManager
+import java.nio.file.Path
+
+import org.apache.logging.log4j.LogManager
 
 import scala.sys.process.{Process, ProcessBuilder, ProcessLogger}
 
@@ -38,7 +38,7 @@ case class ExecArgs(
   interactive: Boolean = false
 )
 
-class DockerClient(fileSystem: FileSystem) {
+class DockerClient() {
   protected val logger = LogManager.getLogger(getClass.getName)
 
   def run(
@@ -109,7 +109,7 @@ class DockerClient(fileSystem: FileSystem) {
           case (h, c) =>
             List(
               "-v",
-              s"${fileSystem.toAbsolute(h).toUri.getPath}:${c.toUri.getPath}"
+              s"${h.toAbsolutePath.toUri.getPath}:${c.toUri.getPath}"
             )
         }
         .reduceOption(_ ++ _)

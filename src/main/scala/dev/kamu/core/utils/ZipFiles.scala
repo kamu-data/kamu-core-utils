@@ -8,32 +8,29 @@
 
 package dev.kamu.core.utils
 
+import java.nio.file.Path
 import java.util.zip.ZipInputStream
 
+import better.files.File
+
 import fs._
-import org.apache.hadoop.fs.{FileSystem, Path}
 
 object ZipFiles {
-  def extractZipFile(
-    fileSystem: FileSystem,
-    filePath: Path,
-    outputDir: Path
-  ): Unit = {
-    val inputStream = fileSystem.open(filePath)
+  def extractZipFile(filePath: Path, outputDir: Path): Unit = {
+    val inputStream = File(filePath).newInputStream
     val zipStream = new ZipInputStream(inputStream)
 
-    extractZipFile(fileSystem, zipStream, outputDir)
+    extractZipFile(zipStream, outputDir)
 
     zipStream.close()
   }
 
   def extractZipFile(
-    fileSystem: FileSystem,
     zipStream: ZipInputStream,
     outputDir: Path,
     filterRegex: Option[String] = None
   ): Unit = {
-    fileSystem.mkdirs(outputDir)
+    File(outputDir).createDirectories()
 
     Stream
       .continually(zipStream.getNextEntry)
@@ -42,7 +39,7 @@ object ZipFiles {
         entry => filterRegex.isEmpty || entry.getName.matches(filterRegex.get)
       )
       .foreach(entry => {
-        val outputStream = fileSystem.create(outputDir.resolve(entry.getName))
+        val outputStream = File(outputDir / entry.getName).newOutputStream
 
         val buffer = new Array[Byte](1024)
 

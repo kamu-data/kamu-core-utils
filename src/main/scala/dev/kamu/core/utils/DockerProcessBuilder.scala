@@ -18,7 +18,7 @@ import java.net.{
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 
-import org.apache.log4j.{Level, LogManager, Logger, Priority}
+import org.apache.logging.log4j.{Level, LogManager, Logger}
 
 import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
@@ -185,8 +185,8 @@ object IOHandlerPresets {
 
   def logged(
     logger: Logger,
-    outLevel: Priority = Level.DEBUG,
-    errLevel: Priority = Level.DEBUG
+    outLevel: Level = Level.DEBUG,
+    errLevel: Level = Level.DEBUG
   ): ProcessLogger = {
     ProcessLogger(
       out => logger.log(outLevel, out),
@@ -196,8 +196,8 @@ object IOHandlerPresets {
 
   def redirectToLogger(
     logger: Logger,
-    outLevel: Priority = Level.DEBUG,
-    errLevel: Priority = Level.DEBUG,
+    outLevel: Level = Level.DEBUG,
+    errLevel: Level = Level.DEBUG,
     tag: String = ""
   ): ProcessIO = {
     new ProcessIO(
