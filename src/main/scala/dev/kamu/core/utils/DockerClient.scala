@@ -105,13 +105,7 @@ class DockerClient() {
         .reduceOption(_ ++ _)
         .getOrElse(List.empty),
       runArgs.volumeMap
-        .map {
-          case (h, c) =>
-            List(
-              "-v",
-              s"${h.toAbsolutePath.toUri.getPath}:${c.toUri.getPath}"
-            )
-        }
+        .map { case (h, c) => List("-v", formatVolume(h, c)) }
         .reduceOption(_ ++ _)
         .getOrElse(List.empty),
       runArgs.workDir.map(v => List("--workdir", v)).getOrElse(List.empty),
@@ -182,6 +176,26 @@ class DockerClient() {
       body
     } finally {
       prepare(Seq("docker", "network", "rm", network)).!(processLogger)
+    }
+  }
+
+  // TODO: Windows sadness territory :'(
+  private def formatVolume(src: Path, dst: Path): String = {
+    val ssrc =
+      if (!OS.isWindows) src.toAbsolutePath.toString else asBoot2DockerPath(src)
+
+    val sdst =
+      if (!OS.isWindows) dst.toAbsolutePath.toString
+      else dst.toAbsolutePath.toString.substring(2).replace('\\', '/')
+
+    s"$ssrc:$sdst"
+  }
+
+  private def asBoot2DockerPath(p: Path): String = {
+    val drivePattern = "([a-zA-Z]):(.*)".r
+    p.toAbsolutePath.toString.replace('\\', '/') match {
+      case drivePattern(drive, rest) => s"/${drive.toLowerCase}${rest}"
+      case _                         => throw new Exception(s"Unexpected path without drive letter: $p")
     }
   }
 }
