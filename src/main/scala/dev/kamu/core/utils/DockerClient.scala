@@ -8,11 +8,13 @@
 
 package dev.kamu.core.utils
 
+import java.net.URI
 import java.nio.file.Path
 
 import org.apache.logging.log4j.LogManager
 
 import scala.sys.process.{Process, ProcessBuilder, ProcessLogger}
+import scala.util.Try
 
 case class DockerRunArgs(
   image: String,
@@ -152,7 +154,14 @@ class DockerClient() {
 
   def inspectHostPort(container: String, port: Int): Option[Int] = {
     val format = "--format={{ (index (index .NetworkSettings.Ports \"" + port + "/tcp\") 0).HostPort }}"
-    val processBuilder = prepare(Seq("docker", "inspect", format, container))
+
+    val formatEscaped =
+      if (!OS.isWindows) format else format.replace("\"", "\\\"")
+
+    val processBuilder = prepare(
+      Seq("docker", "inspect", formatEscaped, container)
+    )
+
     try {
       Some(
         processBuilder
@@ -179,6 +188,16 @@ class DockerClient() {
     }
   }
 
+  def getDockerHost: String = {
+    sys.env
+      .get("DOCKER_HOST")
+      .map(s => URI.create(s).getHost)
+      .orElse(
+        Try(Process(Seq("docker-machine", "ip", "default")).!!).toOption
+      )
+      .getOrElse("localhost")
+  }
+
   // TODO: Windows sadness territory :'(
   private def formatVolume(src: Path, dst: Path): String = {
     val ssrc =
@@ -197,5 +216,17 @@ class DockerClient() {
       case drivePattern(drive, rest) => s"/${drive.toLowerCase}${rest}"
       case _                         => throw new Exception(s"Unexpected path without drive letter: $p")
     }
+  }
+
+  implicit class ProcessEx(val p: Process) {
+
+    def raiseForExitValue(id: String): Unit = {
+      val exitValue = p.exitValue()
+      if (exitValue != 0)
+        throw new Exception(
+          f"Process $id exited abnormally with code: $exitValue"
+        )
+    }
+
   }
 }

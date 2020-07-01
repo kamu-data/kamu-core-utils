@@ -56,6 +56,8 @@ class DockerProcess(
   runArgs: DockerRunArgs,
   ioHandler: Option[ProcessIO] = None
 ) {
+  private val logger = LogManager.getLogger(getClass.getName)
+
   val process: Process = processBuilder.run(getIOHandler())
 
   protected def getIOHandler(): ProcessIO = {
@@ -73,6 +75,10 @@ class DockerProcess(
 
   def kill(signal: String = "TERM"): Unit = {
     dockerClient.kill(containerName, signal)
+  }
+
+  def stop(time: Int = 10): Unit = {
+    dockerClient.stop(containerName, time)
   }
 
   def getHostPort(containerPort: Int): Option[Int] = {
@@ -98,6 +104,8 @@ class DockerProcess(
       hostPort = getHostPort(containerPort)
     }
 
+    val dockerHost = dockerClient.getDockerHost
+
     def tryConnect(): Boolean = {
       val timeout = (deadline.toEpochMilli - Instant.now().toEpochMilli).toInt
       if (timeout < 0)
@@ -105,7 +113,10 @@ class DockerProcess(
 
       try {
         val s = new Socket()
-        s.connect(new InetSocketAddress("localhost", hostPort.get), timeout)
+        s.connect(
+          new InetSocketAddress(dockerHost, hostPort.get),
+          timeout
+        )
 
         // TODO: Due to how docker works it will accept socket connections to the mapped port even when
         // the corresponding port in the container didn't open yet. So here we have to wait for a short time and
@@ -127,6 +138,14 @@ class DockerProcess(
         case _: IOException            => false
       }
     }
+
+    logger.debug(
+      "Waiting for port of {}:{} forwarded to {}:{}",
+      containerName,
+      containerPort,
+      dockerHost,
+      hostPort.get
+    )
 
     while (!tryConnect()) {
       waitSome()
