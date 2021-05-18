@@ -8,6 +8,8 @@
 
 package dev.kamu.core.utils
 
+import org.slf4j.event.Level
+
 import java.io.{IOException, InputStream, OutputStream}
 import java.net.{
   ConnectException,
@@ -17,8 +19,7 @@ import java.net.{
 }
 import java.nio.charset.StandardCharsets
 import java.time.Instant
-
-import org.apache.logging.log4j.{Level, LogManager, Logger}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
@@ -29,7 +30,7 @@ class DockerProcessBuilder(
   protected val dockerClient: DockerClient,
   protected val runArgs: DockerRunArgs
 ) {
-  protected val logger = LogManager.getLogger(getClass.getName)
+  private val logger = LoggerFactory.getLogger(classOf[DockerProcessBuilder])
 
   def cmd: Seq[String] = {
     dockerClient.makeRunCmd(runArgs)
@@ -56,7 +57,7 @@ class DockerProcess(
   runArgs: DockerRunArgs,
   ioHandler: Option[ProcessIO] = None
 ) {
-  private val logger = LogManager.getLogger(getClass.getName)
+  private val logger = LoggerFactory.getLogger(classOf[DockerProcess])
 
   val process: Process = processBuilder.run(getIOHandler())
 
@@ -142,9 +143,9 @@ class DockerProcess(
     logger.debug(
       "Waiting for port of {}:{} forwarded to {}:{}",
       containerName,
-      containerPort,
+      Int.box(containerPort),
       dockerHost,
-      hostPort.get
+      Int.box(hostPort.get)
     )
 
     while (!tryConnect()) {
@@ -203,13 +204,13 @@ object IOHandlerPresets {
   }
 
   def logged(
-    logger: Logger,
+    logger: org.slf4j.Logger,
     outLevel: Level = Level.DEBUG,
     errLevel: Level = Level.DEBUG
   ): ProcessLogger = {
     ProcessLogger(
-      out => logger.log(outLevel, out),
-      err => logger.log(errLevel, err)
+      out => log(logger, outLevel, out),
+      err => log(logger, errLevel, err)
     )
   }
 
@@ -225,12 +226,12 @@ object IOHandlerPresets {
         scala.io.Source
           .fromInputStream(out)
           .getLines
-          .foreach(l => logger.log(outLevel, tag + l)),
+          .foreach(l => log(logger, outLevel, tag + l)),
       stderr =>
         scala.io.Source
           .fromInputStream(stderr)
           .getLines()
-          .foreach(l => logger.log(errLevel, tag + l))
+          .foreach(l => log(logger, errLevel, tag + l))
     )
   }
 
@@ -242,6 +243,17 @@ object IOHandlerPresets {
         return
 
       to.write(buf, 0, read)
+    }
+  }
+
+  // Thanks, SLF4J
+  private def log(logger: Logger, level: Level, msg: String): Unit = {
+    level match {
+      case Level.DEBUG => logger.debug(msg)
+      case Level.INFO  => logger.info(msg)
+      case Level.WARN  => logger.warn(msg)
+      case Level.ERROR => logger.error(msg)
+      case Level.TRACE => logger.trace(msg)
     }
   }
 }

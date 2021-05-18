@@ -10,8 +10,7 @@ package dev.kamu.core.utils
 
 import java.net.URI
 import java.nio.file.Path
-
-import org.apache.logging.log4j.LogManager
+import org.slf4j.LoggerFactory
 
 import scala.sys.process.{Process, ProcessBuilder, ProcessLogger}
 import scala.util.Try
@@ -41,7 +40,7 @@ case class ExecArgs(
 )
 
 class DockerClient() {
-  protected val logger = LogManager.getLogger(getClass.getName)
+  private val logger = LoggerFactory.getLogger(classOf[DockerClient])
 
   def run(
     runArgs: DockerRunArgs
