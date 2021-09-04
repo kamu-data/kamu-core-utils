@@ -8,11 +8,9 @@
 
 package dev.kamu.core.utils
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 import java.util.zip.ZipInputStream
-
 import better.files.File
-
 import fs._
 
 object ZipFiles {
@@ -39,7 +37,13 @@ object ZipFiles {
         entry => filterRegex.isEmpty || entry.getName.matches(filterRegex.get)
       )
       .foreach(entry => {
-        val outputStream = File(outputDir / entry.getName).newOutputStream
+        val outputPath = outputDir / Paths.get(entry.getName)
+        val parent = File(outputPath.getParent)
+        if (!parent.exists) {
+          parent.createDirectories()
+        }
+
+        val outputStream = File(outputPath).newOutputStream
 
         val buffer = new Array[Byte](1024)
 
