@@ -1,22 +1,30 @@
 /*
- * Copyright (c) 2018 kamu.dev
+ * Copyright 2018 kamu.dev
  *
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package dev.kamu.core.utils
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.util.zip.ZipInputStream
-import better.files.File
 import fs._
+
+import java.io.{FileInputStream, FileOutputStream}
 
 object ZipFiles {
   def extractZipFile(filePath: Path, outputDir: Path): Unit = {
-    val inputStream = File(filePath).newInputStream
-    val zipStream = new ZipInputStream(inputStream)
+    val zipStream = new ZipInputStream(new FileInputStream(filePath.toFile))
 
     extractZipFile(zipStream, outputDir)
 
@@ -28,7 +36,7 @@ object ZipFiles {
     outputDir: Path,
     filterRegex: Option[String] = None
   ): Unit = {
-    File(outputDir).createDirectories()
+    Files.createDirectories(outputDir)
 
     Stream
       .continually(zipStream.getNextEntry)
@@ -38,12 +46,12 @@ object ZipFiles {
       )
       .foreach(entry => {
         val outputPath = outputDir / Paths.get(entry.getName)
-        val parent = File(outputPath.getParent)
-        if (!parent.exists) {
-          parent.createDirectories()
+        val parent = outputPath.getParent
+        if (!parent.toFile.exists()) {
+          Files.createDirectories(parent)
         }
 
-        val outputStream = File(outputPath).newOutputStream
+        val outputStream = new FileOutputStream(outputPath.toFile)
 
         val buffer = new Array[Byte](1024)
 
